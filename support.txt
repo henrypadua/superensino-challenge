@@ -1,0 +1,8 @@
+# Dependências para configurar o eslint + prettier
+yarn add -D eslint prettier eslint-plugin-prettier eslint-config-prettier eslint-plugin-react-hooks eslint-plugin-import-helpers
+
+# Iniciar o eslint
+yarn create @eslint/config
+
+# Dependências do eslint config
+yarn add -D eslint-plugin-react@latest @typescript-eslint/eslint-plugin@latest @typescript-eslint/parser@latest
