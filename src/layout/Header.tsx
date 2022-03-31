@@ -13,8 +13,8 @@ export function Header() {
          gridGap={2}
       >
          <div>
-            <Heading as="h1" size="sm">
-               vite-react-chakra-starter
+            <Heading as="h1" size="lg">
+               SuperEnsino Challenge
             </Heading>
          </div>
 

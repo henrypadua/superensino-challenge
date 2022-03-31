@@ -1,22 +1,20 @@
 import { useEffect, useState } from 'react'
 
-import { Box, Heading, Divider, Button } from '@chakra-ui/react'
+import { Box, Center } from '@chakra-ui/react'
 
 import { CardQuestion } from '@/components/CardQuestion'
+import { CategoryQuestion } from '@/components/CategoryQuestion'
 import { Loader } from '@/components/Loader'
 import { totalQuestions } from '@/constants'
 import { api } from '@/services/api'
-import type { AnswerObject, Question, QuestionResponse } from '@/types'
+import type { AnswerObject, QuestionResponse } from '@/types'
 import { shuffleArray } from '@/utils'
 
 export function Home() {
-   const [startQuiz, setStartQuiz] = useState(false)
-   const [questions, setQuestions] = useState<Question[]>([])
+   const [questions, setQuestions] = useState<any[]>([])
    const [userAnswer, setUserAnswer] = useState<AnswerObject[]>([])
    const [isLoading, setIsLoading] = useState(true)
-   const [questionNumber, setQuestionNumber] = useState(0)
-   const [score, setScore] = useState(0)
-   const [gameOver, setGameOver] = useState(false)
+   const [questionNumber, setQuestionNumber] = useState(-1)
 
    useEffect(() => {
       async function getQuestions() {
@@ -24,11 +22,11 @@ export function Home() {
 
          await api
             .get<QuestionResponse>(
-               `https://opentdb.com/api.php?amount=${totalQuestions}&category=22&difficulty=easy&type=multiple`
+               `https://opentdb.com/api.php?amount=${totalQuestions}&category=23&difficulty=easy&type=multiple`
             )
             .then((response) => {
-               setQuestions(
-                  response?.data?.results.map((question: Question) => ({
+               return setQuestions(
+                  response?.data?.results.map((question) => ({
                      ...question,
                      answers: shuffleArray([
                         ...question.incorrect_answers,
@@ -39,150 +37,80 @@ export function Home() {
             })
             .finally(() => setIsLoading(false))
       }
+
       getQuestions()
    }, [])
 
-   const startQuizGame = (): void => {
-      setStartQuiz(true)
-   }
-
-   const checkAnswer = (e: React.FormEvent<HTMLFormElement>): void => {
-      e.preventDefault()
-
-      if (gameOver) return
-
+   const checkAnswer = (e: React.MouseEvent<HTMLButtonElement>): void => {
       const choosedAnswer = e.currentTarget.innerText
 
       const correct =
          questions[questionNumber]?.correct_answer === choosedAnswer
 
-      if (correct) setScore((previous) => previous + 1)
-
-      if (userAnswer.length != questionNumber) {
-         if (!correct) setScore((previous) => previous - 1)
-         const lastIndex = userAnswer.length - 1
-         if (lastIndex >= 0) {
-            userAnswer.splice(lastIndex, 1)
-            const answerObject = {
-               question: questions[questionNumber]?.question,
-               answer: choosedAnswer,
-               correct,
-               correctAnswer: questions[questionNumber]?.correct_answer
-            }
-            setUserAnswer((previous) => [...previous, answerObject])
-         }
-         return
-      }
-
       const answerObject = {
+         index: questionNumber,
          question: questions[questionNumber]?.question,
          answer: choosedAnswer,
          correct,
          correctAnswer: questions[questionNumber]?.correct_answer
       }
-      setUserAnswer((previous) => [...previous, answerObject])
+
+      const filterAnswer = userAnswer.filter(
+         (answer) => answerObject.index !== answer.index
+      )
+
+      const orderAnswer = [...filterAnswer, answerObject].sort((a, b) => {
+         return a.index - b.index
+      })
+
+      setUserAnswer(orderAnswer)
    }
 
-   const nextQuestion = (e: React.FormEvent<HTMLFormElement>): void => {
-      e.preventDefault()
+   const nextQuestion = (): void => {
       const nextQuestion = questionNumber + 1
-      if (totalQuestions === nextQuestion) {
-         setGameOver(true)
-      }
       setQuestionNumber(nextQuestion)
    }
 
-   const replayQuiz = (): void => {
-      setStartQuiz(false)
-      setGameOver(false)
-      setQuestionNumber(0)
-      setScore(0)
-      setUserAnswer([])
+   const prevQuestion = (): void => {
+      const prevQuestion = questionNumber - 1
+      setQuestionNumber(prevQuestion)
    }
 
    return (
-      <>
-         <div className="App">
-            {isLoading && (
-               <div className="app-spinner">
-                  <Loader
-                     speed="0.65s"
-                     emptyColor="gray.200"
-                     color="purple"
-                     size="lg"
-                     thickness="5px"
+      <Box>
+         {isLoading && (
+            <Center h="100px" color="white">
+               <Loader
+                  speed="0.85s"
+                  emptyColor="gray.200"
+                  color="blue.500"
+                  size="xl"
+                  thickness="4px"
+               />
+            </Center>
+         )}
+         {!isLoading && (
+            <Box p="6" rounded="md">
+               {questionNumber < 0 ? (
+                  <CategoryQuestion
+                     data={questions}
+                     setQuestionNumber={setQuestionNumber}
                   />
-               </div>
-            )}
-            {!isLoading && (
-               <Box p="6" rounded="md" maxW="560px">
+               ) : (
                   <CardQuestion
                      questions={questions[questionNumber]}
                      category={questions[questionNumber].category}
-                     callback={checkAnswer}
+                     callback={(e) => checkAnswer(e)}
                      totalQuestions={totalQuestions}
                      questionNumber={questionNumber}
+                     userAnswer={userAnswer[questionNumber]}
+                     prevQuestion={prevQuestion}
+                     nextQuestion={nextQuestion}
+                     handleBackToCategory={() => setQuestionNumber(-1)}
                   />
-
-                  <Button
-                     disabled={
-                        userAnswer.length === questionNumber + 1 &&
-                        questionNumber !== totalQuestions
-                           ? false
-                           : true
-                     }
-                     colorScheme="blue"
-                     variant="solid"
-                     onClick={nextQuestion}
-                     className="next-button"
-                     width="full"
-                  >
-                     Próximo Exercício
-                  </Button>
-               </Box>
-            )}
-            {gameOver && (
-               <>
-                  <Box
-                     boxShadow="base"
-                     p="6"
-                     rounded="md"
-                     bg="white"
-                     maxW="560px"
-                  >
-                     <Box mb={4}>
-                        <Box fontWeight="bold" as="h3" fontSize="4xl">
-                           Game Over!
-                        </Box>
-                        <Box as="h3" fontSize="xl">
-                           Your score is {score}/{totalQuestions}.
-                        </Box>
-                     </Box>
-                     <Divider />
-                     {userAnswer.map((answer, index) => (
-                        <Box key={index}>
-                           <div className="answer-list">
-                              <Box fontSize="md" fontWeight="bold">
-                                 Q: {answer.question}
-                              </Box>
-                              <ul>
-                                 <li>You answered: {answer.answer}</li>
-                                 <li>Correct answer: {answer.correctAnswer}</li>
-                              </ul>
-                           </div>
-                        </Box>
-                     ))}
-                     <Button
-                        colorScheme="purple"
-                        variant="solid"
-                        onClick={replayQuiz}
-                        value="Replay Quiz"
-                        width="full"
-                     />
-                  </Box>
-               </>
-            )}
-         </div>
-      </>
+               )}
+            </Box>
+         )}
+      </Box>
    )
 }

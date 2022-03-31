@@ -11,12 +11,21 @@ import {
 
 import { CategoryQuestionProps } from '../../types'
 
-export function CategoryQuestion({ data }: CategoryQuestionProps) {
+export function CategoryQuestion({
+   data,
+   setQuestionNumber
+}: CategoryQuestionProps) {
    return (
-      <Accordion allowToggle>
-         <AccordionItem sx={{ borderColor: 'red', border: 'none' }}>
+      <Accordion allowToggle defaultIndex={[0]}>
+         <AccordionItem sx={{ border: 'none' }}>
             <h2>
-               <AccordionButton>
+               <AccordionButton
+                  bgColor={'blue.300'}
+                  sx={{
+                     transition: '0.3s',
+                     _hover: { filter: 'brightness(0.8)' }
+                  }}
+               >
                   <Box flex="1" textAlign="left">
                      Acentuação Gráfica
                   </Box>
@@ -33,7 +42,10 @@ export function CategoryQuestion({ data }: CategoryQuestionProps) {
                      <Button
                         key={i}
                         variant={'outline'}
-                        borderColor={'telegram.500'}
+                        colorScheme="blue"
+                        onClick={() => {
+                           setQuestionNumber(i)
+                        }}
                      >
                         Exercício {i + 1}
                      </Button>
