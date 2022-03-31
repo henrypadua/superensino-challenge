@@ -2,7 +2,7 @@
 
 ## Link para ver a aplicação no github pages
 
-- [Github Pages](https://henrypadua.github.io/invoicexpress-challenge/)
+- [Github Pages](https://henrypadua.github.io/superensino-challenge/)
 
 ## ✨ Tecnologias
 
